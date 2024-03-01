@@ -7,8 +7,8 @@ MSSQL_SERVER = os.getenv('MSSQL_SERVER')
 MSSQL_DATABASE = os.getenv('MSSQL_DATABASE')
 MSSQL_USER = os.getenv('MSSQL_USER')
 MSSQL_PASSWORD = os.getenv('MSSQL_PASSWORD')
-schema_name = 'dbo'  # Schema you want to export tables from
-directory_to_save_excel = 'path/to/save/excel/files/'  # Directory to save Excel files
+schema_name = 'digirent'  # Schema you want to export tables from
+directory_to_save_excel = r'C:\Users\dogan\OneDrive\Masaüstü\Çalışmalar\Digirent\Faz-2\Faz-2 Çalışmalar\Faz-2 Konular\Veri kalite kontrol çalışmaları\Veriler\\'  # Directory to save Excel files
 
 print("Connecting to the database...")
 # Connection string
@@ -26,15 +26,22 @@ tables = cursor.fetchall()
 print(f"Found {len(tables)} tables. Starting to export to Excel files...")
 
 
-# Loop through each table and export its records to an Excel file
+# Loop through each table and ask before exporting its records to an Excel file
 for table in tables:
     table_name = table[0]
-    print(f"Processing table: {table_name}")
-    sql_query = f'SELECT * FROM {schema_name}.{table_name}'
-    df = pd.read_sql(sql_query, conn)
-    excel_file_path = f'{directory_to_save_excel}{table_name}.xlsx'
-    df.to_excel(excel_file_path, index=False, engine='openpyxl')
-    print(f'Successfully saved {table_name} records to {excel_file_path}')
+    user_input = input(f"Processing table: {table_name}. Download this table? (yes/no): ")
+    if user_input.lower() == "yes" or user_input.lower() == "evet":
+        print(f"Downloading table: {table_name}")
+        sql_query = f'SELECT * FROM {schema_name}.{table_name}'
+        df = pd.read_sql(sql_query, conn)
+        excel_file_path = f'{directory_to_save_excel}{table_name}.xlsx'
+        df.to_excel(excel_file_path, index=False, engine='openpyxl')
+        print(f'Successfully saved {table_name} records to {excel_file_path}')
+    else:
+        print(f"Skipping table: {table_name}")
+
+    # Break after the first iteration, regardless of the user's choice
+    break
 
 # Close the database connection
 conn.close()
