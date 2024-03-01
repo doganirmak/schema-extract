@@ -47,4 +47,3 @@ for table in tables:
 conn.close()
 print("All tables have been successfully exported. Process completed.")
 
-....
