@@ -7,7 +7,7 @@ MSSQL_SERVER = os.getenv('MSSQL_SERVER')
 MSSQL_DATABASE = os.getenv('MSSQL_DATABASE')
 MSSQL_USER = os.getenv('MSSQL_USER')
 MSSQL_PASSWORD = os.getenv('MSSQL_PASSWORD')
-schema_name = 'dbo'  # Schema you want to export tables from
+schema_name = ''  # Schema you want to export tables from
 directory_to_save_excel = 'path/to/save/excel/files/'  # Directory to save Excel files
 
 print("Connecting to the database...")

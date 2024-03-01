@@ -2,36 +2,60 @@ import os
 import pyodbc
 import pandas as pd
 
-# Retrieve database connection details from environment variables
+# Veritabanı bağlantı detaylarını al
 MSSQL_SERVER = os.getenv('MSSQL_SERVER')
 MSSQL_DATABASE = os.getenv('MSSQL_DATABASE')
 MSSQL_USER = os.getenv('MSSQL_USER')
 MSSQL_PASSWORD = os.getenv('MSSQL_PASSWORD')
-schema_name = 'digirent'  # Schema you want to export tables from
+schema_name = ''  # İlgili şema adı
 directory_to_save_excel = r'C:\Users\dogan\OneDrive\Masaüstü\Çalışmalar\Digirent\Faz-2\Faz-2 Çalışmalar\Faz-2 Konular\Veri kalite kontrol çalışmaları\Veriler\\'  # Directory to save Excel files
 
-print("Connecting to the database...")
-# Connection string
+print("Veritabanına bağlanıyor...")
+# Bağlantı dizesi
 conn_str = f'DRIVER={{SQL Server}};SERVER={MSSQL_SERVER};DATABASE={MSSQL_DATABASE};UID={MSSQL_USER};PWD={MSSQL_PASSWORD}'
 
-# Connect to the database
+# Veritabanına bağlan
 conn = pyodbc.connect(conn_str)
-print("Successfully connected to the database.")
+print("Veritabanına başarıyla bağlanıldı.")
 
-# Fetching all table names in the specified schema
+# Tüm tablo isimlerini ve boyutlarını çek
 cursor = conn.cursor()
-print(f"Fetching table names from schema: {schema_name}...")
-cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema_name}'")
-tables = cursor.fetchall()
-print(f"Found {len(tables)} tables. Starting to export to Excel files...")
+table_size_query = f"""
+SELECT 
+    t.NAME AS TableName,
+    s.Name AS SchemaName,
+    p.rows AS RowCounts,
+    SUM(a.total_pages) * 8 / 1024.0 AS TotalSpaceMB
+FROM 
+    sys.tables t
+INNER JOIN      
+    sys.indexes i ON t.OBJECT_ID = i.object_id
+INNER JOIN 
+    sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id
+INNER JOIN 
+    sys.allocation_units a ON p.partition_id = a.container_id
+INNER JOIN 
+    sys.schemas s ON t.schema_id = s.schema_id
+WHERE 
+    s.Name = '' 
+GROUP BY 
+    t.Name, s.Name, p.Rows
+HAVING 
+    SUM(a.total_pages) * 8 / 1024.0 <= 11
+ORDER BY 
+    TotalSpaceMB DESC;
+"""
 
+# Sorguyu çalıştır ve sonuçları DataFrame'e kaydet
+table_sizes_df = pd.read_sql(table_size_query, conn)
+print(table_sizes_df)
 
-# Loop through each table and ask before exporting its records to an Excel file
-for table in tables:
-    table_name = table[0]
-    user_input = input(f"Processing table: {table_name}. Download this table? (yes/no): ")
-    if user_input.lower() == "yes" or user_input.lower() == "evet":
-        print(f"Downloading table: {table_name}")
+# DataFrame üzerinde döngü yap ve tabloları indir
+for index, row in table_sizes_df.iterrows():
+    table_name = row['TableName']
+    print(f"Processing table: {table_name}")
+    user_input = input(f"Do you want to download {table_name}? (yes/no): ")
+    if user_input.lower() == "y":
         sql_query = f'SELECT * FROM {schema_name}.{table_name}'
         df = pd.read_sql(sql_query, conn)
         excel_file_path = f'{directory_to_save_excel}{table_name}.xlsx'
@@ -40,10 +64,6 @@ for table in tables:
     else:
         print(f"Skipping table: {table_name}")
 
-    # Break after the first iteration, regardless of the user's choice
-    break
-
-# Close the database connection
+# Veritabanı bağlantısını kapat
 conn.close()
-print("All tables have been successfully exported. Process completed.")
-
+print("İşlem tamamlandı.")
