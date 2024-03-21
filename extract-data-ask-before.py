@@ -8,7 +8,7 @@ MSSQL_DATABASE = os.getenv('MSSQL_DATABASE')
 MSSQL_USER = os.getenv('MSSQL_USER')
 MSSQL_PASSWORD = os.getenv('MSSQL_PASSWORD')
 schema_name = ''  # İlgili şema adı
-directory_to_save_excel = r'C:\Users\dogan\OneDrive\Masaüstü\Çalışmalar\Digirent\Faz-2\Faz-2 Çalışmalar\Faz-2 Konular\Veri kalite kontrol çalışmaları\Veriler\\'  # Directory to save Excel files
+directory_to_save_excel = r'C:\Users\Veriler\\'  # Directory to save Excel files
 
 print("Veritabanına bağlanıyor...")
 # Bağlantı dizesi
